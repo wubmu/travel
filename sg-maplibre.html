@@ -27,12 +27,16 @@
   .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
 
   /* Header */
-  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; border-radius: 16px; padding: 36px 32px; margin-bottom: 20px; position: relative; overflow: hidden; }
-  .header::before { content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%; }
+  .header { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%); color: #fff; border-radius: 16px; padding: 36px 32px; margin-bottom: 20px; position: relative; overflow: hidden; animation: headerIn .8s ease both; }
+  @keyframes headerIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+  .header::before { content: ''; position: absolute; top: -50%; right: -10%; width: 300px; height: 300px; background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 70%); border-radius: 50%; animation: headerGlow 6s ease-in-out infinite alternate; }
+  @keyframes headerGlow { from { transform: scale(1) translate(0,0); } to { transform: scale(1.3) translate(-10px, 10px); } }
+  .header::after { content: ''; position: absolute; bottom: -30%; left: 20%; width: 200px; height: 200px; background: radial-gradient(circle, rgba(232,93,58,0.08) 0%, transparent 70%); border-radius: 50%; }
   .header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
   .header .subtitle { font-size: 1.05rem; opacity: 0.85; margin-bottom: 16px; }
   .header .meta { display: flex; flex-wrap: wrap; gap: 16px; font-size: 0.9rem; opacity: 0.8; }
-  .header .meta span { background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; }
+  .header .meta span { background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px; transition: background .2s, transform .2s; }
+  .header .meta span:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); }
 
   /* Tabs */
   .tabs { display: flex; gap: 4px; background: var(--card); border-radius: 14px; padding: 5px; margin-bottom: 20px; box-shadow: var(--shadow); overflow-x: auto; }
@@ -43,10 +47,13 @@
 
   /* Panels */
   .panel { display: none; }
-  .panel.active { display: block; }
+  .panel.active { display: block; animation: panelIn .4s cubic-bezier(.22,1,.36,1) both; }
+  @keyframes panelIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
   /* Cards */
-  .card { background: var(--card); border-radius: 14px; padding: 24px; margin-bottom: 18px; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .card { background: var(--card); border-radius: 14px; padding: 24px; margin-bottom: 18px; box-shadow: var(--shadow); border: 1px solid var(--border); transition: transform .25s cubic-bezier(.22,1,.36,1), box-shadow .25s ease; opacity: 0; transform: translateY(18px); }
+  .card.visible { opacity: 1; transform: translateY(0); }
+  .card:hover { box-shadow: 0 6px 24px rgba(0,0,0,.09); }
   .card h2 { font-size: 1.25rem; margin-bottom: 12px; color: var(--text); }
   .card h3 { font-size: 1.05rem; margin-bottom: 8px; color: var(--text); }
 
@@ -58,6 +65,12 @@
   .timetable { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
   .timetable th { background: #f7f5f2; padding: 10px 12px; text-align: left; font-weight: 600; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; }
   .timetable td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .timetable tr[data-fly] { cursor: pointer; transition: background .15s, transform .15s; }
+  .timetable tr[data-fly]:hover { background: #f0ede8; }
+  .timetable tr[data-fly]:active { transform: scale(.995); background: #e8e4df; }
+  .timetable tr[data-fly] td:first-child::after { content: ' 📍'; font-size: 0.7em; opacity: 0; transition: opacity .2s; }
+  .timetable tr[data-fly]:hover td:first-child::after { opacity: .7; }
+  .timetable tr.fly-flash td { background: #fff3e0; transition: background .6s; }
   .timetable tr:last-child td { border-bottom: none; }
   .timetable .time { font-weight: 600; color: var(--accent); white-space: nowrap; width: 70px; }
   .timetable .dur { color: var(--muted); font-size: 0.82rem; white-space: nowrap; }
@@ -85,7 +98,8 @@
 
   /* Overview stats */
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
-  .stat-card { background: var(--card); border-radius: 12px; padding: 18px; text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border); }
+  .stat-card { background: var(--card); border-radius: 12px; padding: 18px; text-align: center; box-shadow: var(--shadow); border: 1px solid var(--border); transition: transform .2s ease, box-shadow .2s ease; cursor: default; }
+  .stat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,.1); }
   .stat-card .value { font-size: 1.8rem; font-weight: 700; color: var(--accent); }
   .stat-card .label { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
 
@@ -93,8 +107,10 @@
   .tip::before { content: '💡 '; }
 
   .checklist { list-style: none; padding: 0; }
-  .checklist li { padding: 6px 0; font-size: 0.9rem; }
-  .checklist li::before { content: '☐ '; color: var(--muted); margin-right: 6px; }
+  .checklist li { padding: 6px 0; font-size: 0.9rem; cursor: pointer; transition: opacity .2s; }
+  .checklist li::before { content: '☐ '; color: var(--muted); margin-right: 6px; transition: color .2s; }
+  .checklist li.checked { opacity: .5; text-decoration: line-through; }
+  .checklist li.checked::before { content: '☑ '; color: var(--accent3); }
 
   /* Responsive */
   @media (max-width: 768px) {
@@ -519,22 +535,79 @@
   // ===== DATA =====
   var hotel   = {lat:1.3347,lng:103.9613,name:'Dorsett Changi City',icon:'🏨',color:'#333'};
   var airport = {lat:1.3644,lng:103.9915,name:'樟宜机场',icon:'✈️',color:'#666'};
-  var jewel   = {lat:1.3601,lng:103.9897,name:'星耀樟宜 Jewel',icon:'💎',color:'#e85d3a'};
+  var jewel   = {lat:1.3631,lng:103.9881,name:'星耀樟宜 Jewel',icon:'💎',color:'#e85d3a'};
   var east    = {lat:1.3077,lng:103.9315,name:'东海岸公园',icon:'🌊',color:'#e85d3a'};
   var cV      = {lat:1.3879,lng:103.9878,name:'樟宜村熟食中心',icon:'🍜',color:'#e85d3a'};
   var cB      = {lat:1.3907,lng:103.9846,name:'樟宜海滩',icon:'🏖️',color:'#9b59b6'};
+  var songFa  = {lat:1.3585,lng:103.9902,name:'松发肉骨茶',icon:'🍜',color:'#e85d3a'};
   var gbtb    = {lat:1.2816,lng:103.8636,name:'滨海湾花园',icon:'🌿',color:'#2d9cdb'};
-  var lps     = {lat:1.2806,lng:103.8504,name:'老巴刹',icon:'🍜',color:'#2d9cdb'};
+  var lps     = {lat:1.2797,lng:103.8466,name:'老巴刹',icon:'🍜',color:'#2d9cdb'};
   var mer     = {lat:1.2868,lng:103.8545,name:'鱼尾狮公园',icon:'🦁',color:'#2d9cdb'};
   var mbs     = {lat:1.2834,lng:103.8607,name:'金沙/MBS',icon:'🏙️',color:'#2d9cdb'};
-  var uss     = {lat:1.2540,lng:103.8238,name:'环球影城',icon:'🎢',color:'#27ae60'};
-  var aqua    = {lat:1.2585,lng:103.8180,name:'S.E.A.海洋馆',icon:'🐠',color:'#27ae60'};
-  var siloso  = {lat:1.2537,lng:103.8120,name:'西乐索海滩',icon:'🏖️',color:'#27ae60'};
+  var uss     = {lat:1.2540,lng:103.8230,name:'环球影城',icon:'🎢',color:'#27ae60'};
+  var aqua    = {lat:1.2584,lng:103.8208,name:'S.E.A.海洋馆',icon:'🐠',color:'#27ae60'};
+  var siloso  = {lat:1.2512,lng:103.8160,name:'西乐索海滩',icon:'🏖️',color:'#27ae60'};
   var tanjong = {lat:1.2446,lng:103.8252,name:'Tanjong Beach Club',icon:'🍹',color:'#27ae60'};
   var vivo    = {lat:1.2644,lng:103.8222,name:'怡丰城',icon:'🛍️',color:'#27ae60'};
+  var tianTian= {lat:1.2783,lng:103.8451,name:'天天海南鸡饭',icon:'🍚',color:'#27ae60'};
+  var cableCar= {lat:1.2544,lng:103.8175,name:'花柏山缆车',icon:'🚡',color:'#27ae60'};
+  var sultan  = {lat:1.3006,lng:103.8602,name:'苏丹回教堂',icon:'🕌',color:'#9b59b6'};
+  var haji    = {lat:1.3020,lng:103.8610,name:'哈芝巷 Haji Lane',icon:'🎨',color:'#9b59b6'};
+  var arabica = {lat:1.3015,lng:103.8608,name:'% Arabica',icon:'☕',color:'#9b59b6'};
+  var littleIn= {lat:1.3066,lng:103.8519,name:'小印度',icon:'🪷',color:'#9b59b6'};
 
   function mk(p, color, icon, label, note) {
     return {lat:p.lat, lng:p.lng, name:p.name, color:color, icon:icon, label:label||'', note:note||''};
+  }
+
+  // ===== FLY-TO INTERACTION =====
+  // 地点名称 → 坐标映射（用于点击行程表飞行）
+  var flyTargets = {};
+  [hotel,airport,jewel,east,cV,cB,songFa,gbtb,lps,mer,mbs,uss,aqua,siloso,tanjong,vivo,
+   tianTian,cableCar,sultan,haji,arabica,littleIn].forEach(function(p) {
+    flyTargets[p.name] = p;
+    // 也匹配短名
+    if (p.name.length > 4) flyTargets[p.name.substring(0,4)] = p;
+  });
+  // 额外别名
+  flyTargets['星耀樟宜'] = jewel;
+  flyTargets['樟宜机场'] = airport;
+  flyTargets['鱼尾狮'] = mer;
+  flyTargets['滨海湾花园'] = gbtb;
+  flyTargets['环球影城'] = uss;
+  flyTargets['海洋馆'] = aqua;
+  flyTargets['东海岸'] = east;
+  flyTargets['樟宜村'] = cV;
+  flyTargets['樟宜海滩'] = cB;
+  flyTargets['松发'] = songFa;
+  flyTargets['老巴刹'] = lps;
+  flyTargets['金沙'] = mbs;
+  flyTargets['天天'] = tianTian;
+  flyTargets['缆车'] = cableCar;
+  flyTargets['苏丹'] = sultan;
+  flyTargets['哈芝巷'] = haji;
+  flyTargets['小印度'] = littleIn;
+
+  function flyToTarget(text) {
+    // 从行程表文字中匹配地点
+    var keys = Object.keys(flyTargets);
+    for (var i = 0; i < keys.length; i++) {
+      if (text.indexOf(keys[i]) !== -1) {
+        var p = flyTargets[keys[i]];
+        // 找到当前活跃的地图
+        var activeMap = maps['map-overview'] || maps['map-day1'] || maps['map-day2'] || maps['map-day3'] || maps['map-day4'];
+        // 优先用当天地图
+        var panel = document.querySelector('.panel.active');
+        if (panel) {
+          var dayName = panel.id.replace('panel-','');
+          if (maps['map-' + dayName]) activeMap = maps['map-' + dayName];
+        }
+        if (activeMap) {
+          activeMap.flyTo({ center: [p.lng, p.lat], zoom: 15, pitch: 50, duration: 1200 });
+        }
+        return;
+      }
+    }
   }
 
   // ===== INIT DAY MAP =====
@@ -593,6 +666,75 @@
 
   // ===== INIT =====
   initDayMap('overview');
+
+  // ===== 卡片交错入场动画 =====
+  function staggerCards() {
+    var cards = document.querySelectorAll('.panel.active .card');
+    cards.forEach(function(card, i) {
+      card.classList.remove('visible');
+      setTimeout(function() { card.classList.add('visible'); }, 60 + i * 70);
+    });
+  }
+  staggerCards();
+
+  // ===== Toast 提示 =====
+  var toastEl = document.createElement('div');
+  toastEl.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#2d2a26;color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;z-index:9999;opacity:0;transition:all .35s cubic-bezier(.22,1,.36,1);pointer-events:none;box-shadow:0 4px 16px rgba(0,0,0,.2);';
+  document.body.appendChild(toastEl);
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    toastEl.style.opacity = '1';
+    toastEl.style.transform = 'translateX(-50%) translateY(0)';
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(function() {
+      toastEl.style.opacity = '0';
+      toastEl.style.transform = 'translateX(-50%) translateY(20px)';
+    }, 2000);
+  }
+
+  // ===== Checklist 点击勾选 =====
+  document.addEventListener('click', function(e) {
+    var li = e.target.closest('.checklist li');
+    if (li) li.classList.toggle('checked');
+  });
+
+  // ===== 给行程表行绑定点击飞行 =====
+  function bindFlyClicks() {
+    document.querySelectorAll('.timetable tr').forEach(function(tr) {
+      var text = tr.textContent;
+      var matched = false;
+      var keys = Object.keys(flyTargets);
+      for (var i = 0; i < keys.length; i++) {
+        if (text.indexOf(keys[i]) !== -1) { matched = true; break; }
+      }
+      if (matched) {
+        tr.setAttribute('data-fly', '1');
+        tr.onclick = function() {
+          flyToTarget(text);
+          // 找到匹配的地名显示在 toast
+          for (var j = 0; j < keys.length; j++) {
+            if (text.indexOf(keys[j]) !== -1) { showToast('📍 飞往 ' + flyTargets[keys[j]].name); break; }
+          }
+          tr.classList.add('fly-flash');
+          setTimeout(function(){ tr.classList.remove('fly-flash'); }, 600);
+          // 滚动地图到可见区域
+          var mapWrap = document.querySelector('.panel.active .map-wrap');
+          if (mapWrap) mapWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        };
+      }
+    });
+  }
+
+  // ===== Tab 切换后重新绑定 =====
+  var origSwitch = switchTab;
+  switchTab = function(name) {
+    origSwitch(name);
+    setTimeout(function() {
+      staggerCards();
+      bindFlyClicks();
+    }, 50);
+  };
+  bindFlyClicks();
 </script>
 </body>
 </html>
