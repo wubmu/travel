@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>新加坡 4天3晚 · 路小鲜行程</title>
+<link rel="stylesheet" href="css/maplibre-gl.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   IMMERSIVE MAP DASHBOARD — TRAVEL OS
+   Full-screen map + floating glass panels
+   ============================================================ */
+
+:root {
+  /* Dark panel palette */
+  --panel-bg: rgba(12, 18, 28, 0.88);
+  --panel-solid: #0c121c;
+  --card-bg: rgba(255,255,255,0.06);
+  --card-bg-hover: rgba(255,255,255,0.1);
+  --card-border: rgba(255,255,255,0.08);
+  --card-border-hover: rgba(255,255,255,0.16);
+  --text-primary: #f0ebe4;
+  --text-secondary: rgba(240,235,228,0.6);
+  --text-muted: rgba(240,235,228,0.35);
+  --glass-blur: 24px;
+
+  /* Day accent colors — vivid against dark */
+  --d1: #ff6b4a;
+  --d1-glow: rgba(255,107,74,0.25);
+  --d2: #2dd4a8;
+  --d2-glow: rgba(45,212,168,0.25);
+  --d3: #f0c246;
+  --d3-glow: rgba(240,194,70,0.25);
+  --d4: #c084fc;
+  --d4-glow: rgba(192,132,252,0.25);
+
+  /* Typography */
+  --font-display: 'Cormorant Garamond', Georgia, 'Noto Serif SC', serif;
+  --font-body: 'Outfit', -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: #0a0e14;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== FULL-SCREEN MAP ===== */
+#map-fullscreen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 1;
+}
+
+/* Map dark overlay to make panels readable */
+.map-dimmer {
+  position: fixed;
+  top: 0; right: 0;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent 0%, rgba(10,14,20,0.3) 30%, rgba(10,14,20,0.6) 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* ===== TOP NAV BAR ===== */
+.topbar {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+
+.topbar .brand {
+  padding: 8px 16px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  border-right: 1px solid var(--card-border);
+  margin-right: 4px;
+}
+
+.day-pill {
+  padding: 8px 18px;
+  border-radius: 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  white-space: nowrap;
+  position: relative;
+}
+.day-pill:hover {
+  color: var(--text-primary);
+  background: var(--card-bg);
+}
+.day-pill.active {
+  color: #fff;
+  font-weight: 600;
+}
+.day-pill.active[data-day="overview"] { background: rgba(240,235,228,0.15); }
+.day-pill.active[data-day="day1"] { background: var(--d1); box-shadow: 0 0 20px var(--d1-glow); }
+.day-pill.active[data-day="day2"] { background: var(--d2); box-shadow: 0 0 20px var(--d2-glow); color: #0c121c; }
+.day-pill.active[data-day="day3"] { background: var(--d3); box-shadow: 0 0 20px var(--d3-glow); color: #0c121c; }
+.day-pill.active[data-day="day4"] { background: var(--d4); box-shadow: 0 0 20px var(--d4-glow); }
+
+.day-pill .pill-sub {
+  display: block;
+  font-size: 0.65rem;
+  opacity: 0.6;
+  margin-top: 1px;
+}
+
+/* ===== CONTENT PANEL (RIGHT SIDE) ===== */
+.content-panel {
+  position: fixed;
+  top: 0; right: 0;
+  width: 520px;
+  height: 100%;
+  z-index: 50;
+  background: var(--panel-bg);
+  backdrop-filter: blur(32px);
+  -webkit-backdrop-filter: blur(32px);
+  border-left: 1px solid var(--card-border);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 76px 24px 32px;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+.content-panel::-webkit-scrollbar { width: 4px; }
+.content-panel::-webkit-scrollbar-track { background: transparent; }
+.content-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+
+/* Panel hidden state (mobile toggle) */
+.content-panel.hidden {
+  transform: translateX(100%);
+}
+
+/* ===== PANEL SECTIONS ===== */
+.panel-section {
+  display: none;
+}
+.panel-section.active {
+  display: block;
+  animation: sectionIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes sectionIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== SECTION TITLES ===== */
+.section-title {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.15;
+  margin-bottom: 6px;
+  color: var(--text-primary);
+}
+.section-subtitle {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  margin-bottom: 20px;
+  font-weight: 300;
+}
+
+/* ===== GLASS CARD ===== */
+.glass-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 14px;
+  transition: background 0.25s ease, border-color 0.25s ease;
+}
+.glass-card:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+}
+.glass-card h3 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ===== HIGHLIGHT STRIP ===== */
+.highlight-strip {
+  padding: 12px 16px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-left: 3px solid;
+}
+.highlight-strip.d1 { background: var(--d1-glow); border-color: var(--d1); color: var(--d1); }
+.highlight-strip.d2 { background: var(--d2-glow); border-color: var(--d2); color: var(--d2); }
+.highlight-strip.d3 { background: var(--d3-glow); border-color: var(--d3); color: var(--d3); }
+.highlight-strip.d4 { background: var(--d4-glow); border-color: var(--d4); color: var(--d4); }
+
+/* ===== BUDGET BADGE ===== */
+.budget-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  margin-top: 4px;
+}
+.budget-pill.d1 { background: var(--d1); color: #fff; }
+.budget-pill.d2 { background: var(--d2); color: #0c121c; }
+.budget-pill.d3 { background: var(--d3); color: #0c121c; }
+.budget-pill.d4 { background: var(--d4); color: #fff; }
+
+/* ===== TIMELINE TABLE ===== */
+.timeline {
+  list-style: none;
+  padding: 0;
+}
+.timeline-item {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--card-border);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-radius: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+  margin: 0 -8px;
+}
+.timeline-item:last-child { border-bottom: none; }
+.timeline-item:hover {
+  background: var(--card-bg-hover);
+}
+.timeline-item .time-col {
+  font-weight: 700;
+  font-size: 0.88rem;
+  font-variant-numeric: tabular-nums;
+  padding-top: 2px;
+}
+.timeline-item .time-col.d1 { color: var(--d1); }
+.timeline-item .time-col.d2 { color: var(--d2); }
+.timeline-item .time-col.d3 { color: var(--d3); }
+.timeline-item .time-col.d4 { color: var(--d4); }
+
+.timeline-item .content-col .activity {
+  font-size: 0.88rem;
+  font-weight: 500;
+  margin-bottom: 2px;
+  color: var(--text-primary);
+}
+.timeline-item .content-col .detail {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.timeline-item .content-col .duration {
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--card-bg);
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+.timeline-item .fly-indicator {
+  grid-column: 1 / -1;
+  font-size: 0.7rem;
+  color: var(--d2);
+  opacity: 0;
+  transition: opacity 0.2s;
+  text-align: right;
+}
+.timeline-item:hover .fly-indicator {
+  opacity: 1;
+}
+
+/* ===== FOOD CARDS ===== */
+.food-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+.food-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--card-bg);
+  border-radius: 10px;
+  border: 1px solid var(--card-border);
+  transition: background 0.2s;
+}
+.food-item:hover { background: var(--card-bg-hover); }
+.food-item .food-emoji {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.food-item .food-info {
+  flex: 1;
+}
+.food-item .food-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.food-item .food-desc {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+}
+.food-item .food-price {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+/* ===== OVERVIEW STATS ===== */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.stat-item {
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+  text-align: center;
+}
+.stat-item .stat-value {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-item .stat-value.d1 { color: var(--d1); }
+.stat-item .stat-value.d2 { color: var(--d2); }
+.stat-item .stat-value.d3 { color: var(--d3); }
+.stat-item .stat-value.d4 { color: var(--d4); }
+.stat-item .stat-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+/* ===== DATA TABLES (dark) ===== */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.data-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 1px solid var(--card-border);
+}
+.data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text-primary);
+}
+.data-table tr:hover td {
+  background: var(--card-bg);
+}
+.data-table .label-cell {
+  color: var(--text-secondary);
+  font-weight: 500;
+  white-space: nowrap;
+  width: 70px;
+}
+
+/* ===== CHECKLIST ===== */
+.checklist { list-style: none; padding: 0; }
+.checklist li {
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: var(--text-primary);
+}
+.checklist li:hover { background: var(--card-bg); }
+.checklist li::before {
+  content: '☐';
+  color: var(--text-muted);
+  font-size: 1rem;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.checklist li.checked {
+  opacity: 0.35;
+  text-decoration: line-through;
+}
+.checklist li.checked::before {
+  content: '☑';
+  color: var(--d2);
+}
+
+/* ===== TIPS ===== */
+.tip-item {
+  padding: 6px 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.tip-item::before { content: '💡 '; }
+
+/* ===== ROUTE LEGEND ===== */
+.route-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  margin-top: 10px;
+}
+.route-legend span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.route-legend .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* ===== MRT MINI ===== */
+.mrt-wrap {
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid var(--card-border);
+  margin-bottom: 12px;
+}
+
+/* ===== META CHIPS ===== */
+.meta-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.meta-chip {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-secondary);
+}
+
+/* ===== TOAST ===== */
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--panel-solid);
+  color: var(--text-primary);
+  padding: 12px 28px;
+  border-radius: 50px;
+  font-size: 0.88rem;
+  font-weight: 500;
+  z-index: 9999;
+  opacity: 0;
+  transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  pointer-events: none;
+  border: 1px solid var(--card-border);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ===== PANEL TOGGLE (MOBILE) ===== */
+.panel-toggle {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 200;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: var(--panel-solid);
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+  font-size: 1.4rem;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+.panel-toggle:active { transform: scale(0.9); }
+
+/* ===== FOOTER ===== */
+.footer-line {
+  text-align: center;
+  padding: 20px 0 8px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  border-top: 1px solid var(--card-border);
+  margin-top: 16px;
+  line-height: 1.6;
+}
+.footer-line b { color: var(--text-secondary); }
+
+/* ===== MARKER HOVER (no transform — safe for MapLibre) ===== */
+.marker-dot:hover {
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  filter: brightness(1.15);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 900px) {
+  .content-panel {
+    width: 100%;
+    top: auto;
+    bottom: 0;
+    height: 55vh;
+    border-left: none;
+    border-top: 1px solid var(--card-border);
+    border-radius: 20px 20px 0 0;
+    padding-top: 20px;
+  }
+  .content-panel.hidden {
+    transform: translateY(100%);
+  }
+  .topbar {
+    top: auto;
+    bottom: calc(55vh + 8px);
+    left: 50%;
+    max-width: calc(100vw - 32px);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .topbar::-webkit-scrollbar { display: none; }
+  .map-dimmer { display: none; }
+  .panel-toggle { display: flex; }
+  .day-pill { padding: 6px 12px; font-size: 0.78rem; }
+  .topbar .brand { display: none; }
+  .section-title { font-size: 1.5rem; }
+}
+
+@media (max-width: 480px) {
+  .content-panel { padding: 16px 16px 24px; }
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .section-title { font-size: 1.3rem; }
+}
+</style>
+</head>
+<body>
+
+<!-- FULL-SCREEN MAP -->
+<div id="map-fullscreen"></div>
+<div class="map-dimmer"></div>
+
+<!-- TOP NAV BAR -->
+<nav class="topbar" id="topbar">
+  <div class="brand">🇸🇬 新加坡 4天3晚</div>
+  <button class="day-pill active" data-day="overview" onclick="switchDay('overview')">
+    🗺️ 全景<span class="pill-sub">总览</span>
+  </button>
+  <button class="day-pill" data-day="day1" onclick="switchDay('day1')">
+    🛬 Day 1<span class="pill-sub">6/12 抵达</span>
+  </button>
+  <button class="day-pill" data-day="day2" onclick="switchDay('day2')">
+    🏙️ Day 2<span class="pill-sub">6/13 滨海湾</span>
+  </button>
+  <button class="day-pill" data-day="day3" onclick="switchDay('day3')">
+    🎢 Day 3<span class="pill-sub">6/14 圣淘沙</span>
+  </button>
+  <button class="day-pill" data-day="day4" onclick="switchDay('day4')">
+    🚲 Day 4<span class="pill-sub">6/15 东海岸</span>
+  </button>
+</nav>
+
+<!-- CONTENT PANEL -->
+<div class="content-panel" id="contentPanel">
+
+  <!-- ===== OVERVIEW ===== -->
+  <div class="panel-section active" id="sec-overview">
+    <div class="section-title">新加坡 4天3晚</div>
+    <div class="section-subtitle">美食探店 × 城市漫游 × 自然风光</div>
+
+    <div class="meta-chips">
+      <span class="meta-chip">📅 6月12日–15日</span>
+      <span class="meta-chip">👥 2人</span>
+      <span class="meta-chip">✈️ 深圳↔新加坡</span>
+      <span class="meta-chip">🏨 Dorsett Changi City</span>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-value d1">4</div><div class="stat-label">天数</div></div>
+      <div class="stat-item"><div class="stat-value d2">12</div><div class="stat-label">景点体验</div></div>
+      <div class="stat-item"><div class="stat-value d3">18+</div><div class="stat-label">美食推荐</div></div>
+      <div class="stat-item"><div class="stat-value d4">~385</div><div class="stat-label">人均 SGD</div></div>
+    </div>
+
+    <div class="glass-card">
+      <h3>✈️ 航班 & 住宿</h3>
+      <table class="data-table">
+        <tr><td class="label-cell">去程</td><td>6月12日 深圳 → 新加坡</td></tr>
+        <tr><td class="label-cell">到达</td><td>6月12日 <b>16:40</b> 樟宜机场</td></tr>
+        <tr><td class="label-cell">回程</td><td>6月15日 <b>18:10</b> 樟宜机场 → 深圳</td></tr>
+        <tr><td class="label-cell">酒店</td><td>Dorsett Changi City · Expo MRT</td></tr>
+      </table>
+    </div>
+
+    <div class="glass-card">
+      <h3>🌤️ 天气 · 6月</h3>
+      <table class="data-table">
+        <tr><td class="label-cell">气温</td><td>27°C – 31°C 闷热</td></tr>
+        <tr><td class="label-cell">降雨</td><td>每天下午3–4点雷阵雨</td></tr>
+        <tr><td class="label-cell">穿搭</td><td>速干T恤+短裤+薄外套（室内冷）</td></tr>
+        <tr><td class="label-cell">必带</td><td>☂️伞、防晒、墨镜、英标转换插头</td></tr>
+      </table>
+    </div>
+
+    <div class="glass-card">
+      <h3>🚇 地铁路线</h3>
+      <div class="mrt-wrap">
+        <svg viewBox="0 0 700 340" style="width:100%;height:auto;display:block;" xmlns="http://www.w3.org/2000/svg">
+          <style>text{font-family:'Outfit',-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}</style>
+          <line x1="80" y1="90" x2="600" y2="90" stroke="#009645" stroke-width="5" stroke-linecap="round"/>
+          <polyline points="200,90 310,210 390,90" fill="none" stroke="#005ec4" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+          <line x1="310" y1="210" x2="465" y2="285" stroke="#fa9e0d" stroke-width="5" stroke-linecap="round"/>
+          <line x1="600" y1="90" x2="465" y2="285" stroke="#9016b2" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="80" cy="90" r="7" fill="#009645" stroke="#fff" stroke-width="2.5"/>
+          <text x="80" y="114" text-anchor="middle" font-size="11" fill="#f0ebe4" font-weight="600">樟宜机场</text>
+          <text x="80" y="127" text-anchor="middle" font-size="9" fill="rgba(240,235,228,0.5)">CG2</text>
+          <rect x="188" y="78" width="24" height="24" rx="4" fill="#1a2633" stroke="#f0ebe4" stroke-width="2"/>
+          <text x="200" y="70" text-anchor="middle" font-size="11.5" fill="#f0ebe4" font-weight="700">Expo 博览</text>
+          <text x="200" y="56" text-anchor="middle" font-size="9" fill="#ff6b4a">EW32 · DT35 · 🏨</text>
+          <rect x="378" y="78" width="24" height="24" rx="4" fill="#1a2633" stroke="#f0ebe4" stroke-width="2"/>
+          <text x="390" y="70" text-anchor="middle" font-size="11" fill="#f0ebe4" font-weight="600">Bugis</text>
+          <text x="390" y="56" text-anchor="middle" font-size="9" fill="rgba(240,235,228,0.5)">EW12 · DT14</text>
+          <circle cx="470" cy="90" r="7" fill="#009645" stroke="#fff" stroke-width="2.5"/>
+          <text x="470" y="70" text-anchor="middle" font-size="11" fill="#f0ebe4">City Hall</text>
+          <rect x="588" y="78" width="24" height="24" rx="4" fill="#1a2633" stroke="#f0ebe4" stroke-width="2"/>
+          <text x="600" y="70" text-anchor="middle" font-size="11" fill="#f0ebe4" font-weight="600">Outram Park</text>
+          <text x="600" y="56" text-anchor="middle" font-size="9" fill="rgba(240,235,228,0.5)">EW16 · NE3</text>
+          <rect x="298" y="198" width="24" height="24" rx="4" fill="#1a2633" stroke="#f0ebe4" stroke-width="2"/>
+          <text x="284" y="207" text-anchor="end" font-size="11" fill="#f0ebe4" font-weight="600">Bayfront 海湾舫</text>
+          <text x="284" y="222" text-anchor="end" font-size="9" fill="#2dd4a8">DT16 · CE1 → Day2</text>
+          <rect x="453" y="273" width="24" height="24" rx="4" fill="#1a2633" stroke="#f0ebe4" stroke-width="2"/>
+          <text x="465" y="310" text-anchor="middle" font-size="11" fill="#f0ebe4" font-weight="600">HarbourFront 港湾</text>
+          <text x="465" y="325" text-anchor="middle" font-size="9" fill="#f0c246">NE1 · CC29 → 圣淘沙</text>
+        </svg>
+      </div>
+      <table class="data-table">
+        <tr><th>日期</th><th>路线</th><th>乘法</th><th>约时</th></tr>
+        <tr><td>Day 2</td><td>Expo → Bayfront</td><td>蓝线(DT) 直达</td><td>~35min</td></tr>
+        <tr><td>Day 3</td><td>Expo → HarbourFront</td><td>绿线→ Outram Park 换紫线</td><td>~40min</td></tr>
+        <tr><td>Day 4</td><td>Expo → 樟宜机场</td><td>绿线(EW) 1站</td><td>~5min</td></tr>
+      </table>
+    </div>
+
+    <div class="glass-card">
+      <h3>💰 预算一览（2人）</h3>
+      <table class="data-table">
+        <tr><th>类别</th><th>人均 SGD</th><th>2人 CNY</th></tr>
+        <tr><td>🎫 景点门票</td><td>~210</td><td>~2,230</td></tr>
+        <tr><td>🍜 餐饮</td><td>~95</td><td>~1,010</td></tr>
+        <tr><td>🚇 交通</td><td>~30</td><td>~320</td></tr>
+        <tr><td>🛍️ 购物</td><td>~50</td><td>~530</td></tr>
+        <tr style="font-weight:700;"><td>总计</td><td>~385</td><td>~4,090</td></tr>
+      </table>
+    </div>
+
+    <div class="glass-card">
+      <h3>🚨 行前必做</h3>
+      <ul class="checklist">
+        <li><b>SG 入境卡 SGAC</b>：抵达前3天在 eservices.ica.gov.sg 填写</li>
+        <li><b>护照</b>：确保6个月以上有效期</li>
+        <li><b>滨海湾花园双馆</b>：Klook提前买电子票</li>
+        <li><b>环球影城门票</b>：Klook SGD 75（现场SGD 82）</li>
+        <li><b>S.E.A.海洋馆</b>：Klook SGD 38（现场SGD 41）</li>
+        <li><b>换汇</b>：提前换 SGD 500–600 现金</li>
+        <li><b>App</b>：Grab、Google Maps、SG MRT</li>
+      </ul>
+    </div>
+
+    <div class="glass-card">
+      <h3>⚠️ 避坑 5 条</h3>
+      <div class="tip-item">下午3点必有雨 — 2:30–4:30安排室内活动</div>
+      <div class="tip-item">不要嚼口香糖 — 新加坡禁售禁嚼</div>
+      <div class="tip-item">熟食中心先占座 — 用纸巾包占位（"chope"）</div>
+      <div class="tip-item">小贩中心只收现金 — 带够SGD 50–80零钱</div>
+      <div class="tip-item">地铁严禁饮食 — 包括喝水，罚款SGD 500</div>
+    </div>
+
+    <div class="footer-line">
+      ⚠️ 信息基于公开资料整理（2026年3–6月），实际以官方发布为准<br>
+      行程由 <b>路小鲜（Leo）</b> AI旅行管家生成
+    </div>
+  </div>
+
+  <!-- ===== DAY 1 ===== -->
+  <div class="panel-section" id="sec-day1">
+    <div class="section-title">🛬 抵达之夜</div>
+    <div class="section-subtitle">Day 1 · 6月12日 · 星耀樟宜 + 东海岸</div>
+    <div class="highlight-strip d1">🎯 落地即打卡全球最美机场，不浪费一分钟</div>
+    <span class="budget-pill d1">💰 SGD 15/人</span>
+
+    <div class="glass-card" style="margin-top:14px">
+      <h3>⏱️ 行程时间表</h3>
+      <ul class="timeline" id="timeline-day1">
+        <li class="timeline-item" data-fly-text="樟宜机场">
+          <div class="time-col d1">16:40</div>
+          <div class="content-col">
+            <div class="activity">🛬 落地樟宜机场</div>
+            <div class="detail">入境+取行李约 40–50 分钟</div>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="星耀樟宜">
+          <div class="time-col d1">17:30</div>
+          <div class="content-col">
+            <div class="activity">🌊 星耀樟宜 Jewel Changi（免费）</div>
+            <div class="detail">40米室内瀑布 Rain Vortex</div>
+            <span class="duration">1.5h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="樟宜村">
+          <div class="time-col d1">19:00</div>
+          <div class="content-col">
+            <div class="activity">🍜 晚餐 · 樟宜村熟食中心</div>
+            <div class="detail">传奇椰浆饭 Mizzy's Corner，SGD 6–8</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="Expo">
+          <div class="time-col d1">20:00</div>
+          <div class="content-col">
+            <div class="activity">🚇 MRT→Expo（绿线1站）入住</div>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="东海岸">
+          <div class="time-col d1">20:30</div>
+          <div class="content-col">
+            <div class="activity">🌅 东海岸公园散步（可选）</div>
+            <div class="detail">打车10分钟，吹海风</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="glass-card">
+      <h3>🍽️ 美食推荐</h3>
+      <div class="food-grid">
+        <div class="food-item">
+          <div class="food-emoji">🍜</div>
+          <div class="food-info">
+            <div class="food-name">Jewel B2 五脚基美食街</div>
+            <div class="food-desc">槟城炒粿条 / 槟城叻沙 · 方案A</div>
+          </div>
+          <div class="food-price">$7–10</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🔥</div>
+          <div class="food-info">
+            <div class="food-name">樟宜村 Mizzy's Corner</div>
+            <div class="food-desc">传奇椰浆饭，炸鸡腿 · 方案B 推荐</div>
+          </div>
+          <div class="food-price">$6–8</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DAY 2 ===== -->
+  <div class="panel-section" id="sec-day2">
+    <div class="section-title">🏙️ 滨海湾精华</div>
+    <div class="section-subtitle">Day 2 · 6月13日 · 未来花园 × 天际线</div>
+    <div class="highlight-strip d2">🎯 一天三场免费灯光秀 + 老巴刹沙爹街</div>
+    <span class="budget-pill d2">💰 SGD 85/人</span>
+
+    <div class="glass-card" style="margin-top:14px">
+      <h3>⏱️ 行程时间表</h3>
+      <ul class="timeline" id="timeline-day2">
+        <li class="timeline-item" data-fly-text="Expo">
+          <div class="time-col d2">08:30</div>
+          <div class="content-col">
+            <div class="activity">🚇 Expo → Bayfront MRT</div>
+            <div class="detail">绿线转蓝线</div>
+            <span class="duration">35min</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="滨海湾花园">
+          <div class="time-col d2">09:15</div>
+          <div class="content-col">
+            <div class="activity">🌿 云雾林 Cloud Forest</div>
+            <div class="detail">全球最高室内瀑布，早去人少</div>
+            <span class="duration">1.5h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="滨海湾花园">
+          <div class="time-col d2">10:45</div>
+          <div class="content-col">
+            <div class="activity">🌸 花穹 Flower Dome</div>
+            <div class="detail">地中海花卉区，凉爽避暑</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="老巴刹">
+          <div class="time-col d2">12:00</div>
+          <div class="content-col">
+            <div class="activity">🍜 午餐 · 老巴刹 Lau Pa Sat</div>
+            <div class="detail">Ah Tai鸡饭SGD 5–6</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="鱼尾狮">
+          <div class="time-col d2">13:30</div>
+          <div class="content-col">
+            <div class="activity">🏙️ 鱼尾狮公园 + 滨海艺术中心</div>
+            <div class="detail">经典打卡照</div>
+            <span class="duration">45min</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="金沙">
+          <div class="time-col d2">14:15</div>
+          <div class="content-col">
+            <div class="activity">🌉 螺旋桥 → 金沙购物城</div>
+            <div class="detail">沿途拍照，进商场吹空调</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="金沙">
+          <div class="time-col d2">15:30</div>
+          <div class="content-col">
+            <div class="activity">☕ 下午茶 · 金沙TWG</div>
+            <div class="detail">可选金沙空中花园 SGD 32</div>
+            <span class="duration">1.5h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="滨海湾花园">
+          <div class="time-col d2">17:30</div>
+          <div class="content-col">
+            <div class="activity">🌳 超级树丛 Supertree Grove</div>
+            <div class="detail">免费，躺草地上等日落</div>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="滨海湾花园">
+          <div class="time-col d2">19:45</div>
+          <div class="content-col">
+            <div class="activity">✨ 花园狂想曲灯光秀</div>
+            <div class="detail">免费！必看声光秀</div>
+            <span class="duration">15min</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="老巴刹">
+          <div class="time-col d2">20:15</div>
+          <div class="content-col">
+            <div class="activity">🍢 老巴刹沙爹街 Satay 7&8</div>
+            <div class="detail">牛肉10串SGD 8，鸡肉SGD 7</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="金沙">
+          <div class="time-col d2">21:15</div>
+          <div class="content-col">
+            <div class="activity">🌊 Spectra水幕灯光秀</div>
+            <div class="detail">免费！金沙购物城外</div>
+            <span class="duration">15min</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="glass-card">
+      <h3>🍽️ 美食重点</h3>
+      <div class="food-grid">
+        <div class="food-item">
+          <div class="food-emoji">🥐</div>
+          <div class="food-info"><div class="food-name">Expo站内咖啡店</div><div class="food-desc">咖椰吐司+半熟蛋+Kopi</div></div>
+          <div class="food-price">$4–5</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🍜</div>
+          <div class="food-info"><div class="food-name">老巴刹 Ah Tai #01-19</div><div class="food-desc">海南鸡饭（和天天齐名）</div></div>
+          <div class="food-price">$5–6</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">☕</div>
+          <div class="food-info"><div class="food-name">TWG Tea Salon 金沙B2</div><div class="food-desc">马卡龙 + 茶</div></div>
+          <div class="food-price">$2.5/个</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🍢</div>
+          <div class="food-info"><div class="food-name">老巴刹 Satay 7&8</div><div class="food-desc">牛/鸡沙爹 + 烤大虾</div></div>
+          <div class="food-price">$7–12</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DAY 3 ===== -->
+  <div class="panel-section" id="sec-day3">
+    <div class="section-title">🎢 圣淘沙岛</div>
+    <div class="section-subtitle">Day 3 · 6月14日 · 环球影城 × 海洋馆 × 沙滩日落</div>
+    <div class="highlight-strip d3">🎯 环球影城 + 亚洲顶级海洋馆 + 沙滩日落一杯酒</div>
+    <span class="budget-pill d3">💰 SGD 160–180/人</span>
+
+    <div class="glass-card" style="margin-top:14px">
+      <h3>⏱️ 行程时间表</h3>
+      <ul class="timeline" id="timeline-day3">
+        <li class="timeline-item" data-fly-text="Expo">
+          <div class="time-col d3">08:30</div>
+          <div class="content-col">
+            <div class="activity">🚇 Expo → HarbourFront MRT</div>
+            <div class="detail">绿线直达，不用换乘</div>
+            <span class="duration">40min</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="环球影城">
+          <div class="time-col d3">09:30</div>
+          <div class="content-col">
+            <div class="activity">🎢 环球影城 Universal Studios</div>
+            <div class="detail">直奔变形金刚/木乃伊！Klook SGD 75</div>
+            <span class="duration">5–6h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item">
+          <div class="time-col d3">12:30</div>
+          <div class="content-col">
+            <div class="activity">🍔 午餐 · 马来西亚美食街</div>
+            <div class="detail">出园吃更划算</div>
+            <span class="duration">45min</span>
+          </div>
+        </li>
+        <li class="timeline-item" data-fly-text="海洋馆">
+          <div class="time-col d3">13:15</div>
+          <div class="content-col">
+            <div class="activity">🐠 S.E.A.海洋馆</div>
+            <div class="detail">全球最大之一，巨型观景窗</div>
+            <span class="duration">2h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="西乐索">
+          <div class="time-col d3">15:30</div>
+          <div class="content-col">
+            <div class="activity">🏖️ 西乐索海滩 Siloso Beach</div>
+            <div class="detail">Coastes沙滩椅，点饮料就能躺</div>
+            <span class="duration">1.5h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="Tanjong">
+          <div class="time-col d3">17:15</div>
+          <div class="content-col">
+            <div class="activity">🍹 Tanjong Beach Club</div>
+            <div class="detail">Singapore Sling SGD 22</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="怡丰城">
+          <div class="time-col d3">18:30</div>
+          <div class="content-col">
+            <div class="activity">🍜 晚餐 · 怡丰城 VivoCity</div>
+            <div class="detail">大食代或JUMBO辣椒螃蟹</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item">
+          <div class="time-col d3">20:00</div>
+          <div class="content-col">
+            <div class="activity">🚇 回酒店</div>
+            <span class="duration">35min</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="glass-card">
+      <h3>🍽️ 美食重点</h3>
+      <div class="food-grid">
+        <div class="food-item">
+          <div class="food-emoji">🥐</div>
+          <div class="food-info"><div class="food-name">Old Chang Kee</div><div class="food-desc">咖喱角 + 罐装咖啡</div></div>
+          <div class="food-price">$4</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🍔</div>
+          <div class="food-info"><div class="food-name">马来西亚美食街</div><div class="food-desc">槟城叻沙、瓦煲鸡饭、炒粿条</div></div>
+          <div class="food-price">$10–15</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🍹</div>
+          <div class="food-info"><div class="food-name">Tanjong Beach Club</div><div class="food-desc">Singapore Sling + Truffle Fries</div></div>
+          <div class="food-price">$22+16</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🦀</div>
+          <div class="food-info"><div class="food-name">JUMBO辣椒螃蟹</div><div class="food-desc">怡丰城，配炸馒头蘸酱是灵魂</div></div>
+          <div class="food-price">$60–80</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DAY 4 ===== -->
+  <div class="panel-section" id="sec-day4">
+    <div class="section-title">🚲 东海岸轻松日</div>
+    <div class="section-subtitle">Day 4 · 6月15日 · 骑行 × 樟宜村 × 星耀樟宜</div>
+    <div class="highlight-strip d4">🎯 沿海骑行 + 飞机头顶掠过 + 星耀樟宜深度游</div>
+    <span class="budget-pill d4">💰 SGD 40–55/人</span>
+
+    <div class="glass-card" style="margin-top:14px">
+      <h3>⏱️ 行程时间表</h3>
+      <ul class="timeline" id="timeline-day4">
+        <li class="timeline-item">
+          <div class="time-col d4">08:30</div>
+          <div class="content-col">
+            <div class="activity">🧳 退房，行李寄存前台</div>
+          </div>
+        </li>
+        <li class="timeline-item" data-fly-text="东海岸">
+          <div class="time-col d4">09:15</div>
+          <div class="content-col">
+            <div class="activity">🚲 东海岸骑行</div>
+            <div class="detail">租车 SGD 8–10/小时，沿海骑行道</div>
+            <span class="duration">1.5h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="樟宜村">
+          <div class="time-col d4">10:45</div>
+          <div class="content-col">
+            <div class="activity">🍜 早午餐 · 樟宜村熟食中心</div>
+            <div class="detail">Mizzy's椰浆饭 + 炒萝卜糕</div>
+            <span class="duration">1h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="樟宜海滩">
+          <div class="time-col d4">12:00</div>
+          <div class="content-col">
+            <div class="activity">🌊 樟宜海滩 Changi Beach</div>
+            <div class="detail">看飞机低空掠过！降落航线正上方</div>
+            <span class="duration">45min</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="星耀樟宜">
+          <div class="time-col d4">13:40</div>
+          <div class="content-col">
+            <div class="activity">🌊 星耀樟宜 Jewel 深度游</div>
+            <div class="detail">星空花园SGD 8、天空之网SGD 15</div>
+            <span class="duration">2h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item" data-fly-text="樟宜机场">
+          <div class="time-col d4">15:30</div>
+          <div class="content-col">
+            <div class="activity">🛫 check-in + 免税店 + T3蝴蝶园</div>
+            <div class="detail">时间充裕</div>
+            <span class="duration">2.5h</span>
+          </div>
+          <div class="fly-indicator">点击飞往地图 →</div>
+        </li>
+        <li class="timeline-item">
+          <div class="time-col d4">18:10</div>
+          <div class="content-col">
+            <div class="activity">✈️ 起飞回深圳</div>
+            <div class="detail">👋 See you Singapore!</div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+    <div class="glass-card">
+      <h3>🍽️ 美食重点</h3>
+      <div class="food-grid">
+        <div class="food-item">
+          <div class="food-emoji">🍜</div>
+          <div class="food-info"><div class="food-name">Mizzy's Corner #01-26</div><div class="food-desc">椰浆饭（新加坡TOP 3！）</div></div>
+          <div class="food-price">$5–7</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🍜</div>
+          <div class="food-info"><div class="food-name">樟宜村 #01-52</div><div class="food-desc">炒萝卜糕（黑白双拼）</div></div>
+          <div class="food-price">$4–5</div>
+        </div>
+        <div class="food-item">
+          <div class="food-emoji">🏆</div>
+          <div class="food-info"><div class="food-name">Hawker Chan 了凡 B2</div><div class="food-desc"><b>米其林一星油鸡饭</b></div></div>
+          <div class="food-price">$3.80!</div>
+        </div>
+      </div>
+      <div class="tip-item" style="margin-top:8px">用一顿 SGD 3.80 的全球最便宜米其林完美收尾！</div>
+    </div>
+  </div>
+
+</div><!-- /content-panel -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MOBILE PANEL TOGGLE -->
+<button class="panel-toggle" id="panelToggle" onclick="togglePanel()">📋</button>
+
+<script src="js/maplibre-gl.js"></script>
+<script>
+// ============================================================
+// MAP-FIRST IMMERSIVE ENGINE
+// ============================================================
+
+var STYLE = 'https://tiles.openfreemap.org/styles/liberty';
+var map;
+
+// ===== LOCATION DATA =====
+var hotel   = {lat:1.3347,lng:103.9613,name:'Dorsett Changi City'};
+var airport = {lat:1.3644,lng:103.9915,name:'樟宜机场'};
+var jewel   = {lat:1.3631,lng:103.9881,name:'星耀樟宜 Jewel'};
+var east    = {lat:1.3077,lng:103.9315,name:'东海岸公园'};
+var cV      = {lat:1.3879,lng:103.9878,name:'樟宜村熟食中心'};
+var cB      = {lat:1.3907,lng:103.9846,name:'樟宜海滩'};
+var songFa  = {lat:1.3585,lng:103.9902,name:'松发肉骨茶'};
+var gbtb    = {lat:1.2816,lng:103.8636,name:'滨海湾花园'};
+var lps     = {lat:1.2797,lng:103.8466,name:'老巴刹'};
+var mer     = {lat:1.2868,lng:103.8545,name:'鱼尾狮公园'};
+var mbs     = {lat:1.2834,lng:103.8607,name:'金沙/MBS'};
+var uss     = {lat:1.2540,lng:103.8230,name:'环球影城'};
+var aqua    = {lat:1.2584,lng:103.8208,name:'S.E.A.海洋馆'};
+var siloso  = {lat:1.2512,lng:103.8160,name:'西乐索海滩'};
+var tanjong = {lat:1.2446,lng:103.8252,name:'Tanjong Beach Club'};
+var vivo    = {lat:1.2644,lng:103.8222,name:'怡丰城'};
+var tianTian= {lat:1.2783,lng:103.8451,name:'天天海南鸡饭'};
+var cableCar= {lat:1.2544,lng:103.8175,name:'花柏山缆车'};
+
+var allPOIs = [hotel,airport,jewel,east,cV,cB,songFa,gbtb,lps,mer,mbs,uss,aqua,siloso,tanjong,vivo,tianTian,cableCar];
+
+// Fly targets map
+var flyTargets = {};
+allPOIs.forEach(function(p) {
+  flyTargets[p.name] = p;
+  if (p.name.length > 4) flyTargets[p.name.substring(0,4)] = p;
+});
+flyTargets['星耀樟宜'] = jewel; flyTargets['樟宜机场'] = airport;
+flyTargets['鱼尾狮'] = mer; flyTargets['滨海湾花园'] = gbtb;
+flyTargets['环球影城'] = uss; flyTargets['海洋馆'] = aqua;
+flyTargets['东海岸'] = east; flyTargets['樟宜村'] = cV;
+flyTargets['樟宜海滩'] = cB; flyTargets['老巴刹'] = lps;
+flyTargets['金沙'] = mbs; flyTargets['怡丰城'] = vivo;
+flyTargets['西乐索'] = siloso; flyTargets['Expo'] = hotel;
+
+// Day view configs
+var dayViews = {
+  overview: { center: [1.31, 103.87], zoom: 11, pitch: 30 },
+  day1: { center: [1.352, 103.965], zoom: 13, pitch: 40 },
+  day2: { center: [1.283, 103.857], zoom: 14, pitch: 45 },
+  day3: { center: [1.253, 103.82], zoom: 14, pitch: 45 },
+  day4: { center: [1.36, 103.96], zoom: 13, pitch: 40 }
+};
+
+var dayColors = {
+  overview: null,
+  day1: '#ff6b4a',
+  day2: '#2dd4a8',
+  day3: '#f0c246',
+  day4: '#c084fc'
+};
+
+var dayMarkers = {
+  overview: [
+    {p:airport,color:'#ff6b4a',icon:'✈️',label:'机场'},
+    {p:jewel,color:'#ff6b4a',icon:'💎'},
+    {p:hotel,color:'#ff6b4a',icon:'🏨',label:'酒店'},
+    {p:gbtb,color:'#2dd4a8',icon:'🌿',label:'滨海湾'},
+    {p:mer,color:'#2dd4a8',icon:'🦁'},
+    {p:mbs,color:'#2dd4a8',icon:'🏙️'},
+    {p:uss,color:'#f0c246',icon:'🎢',label:'环球影城'},
+    {p:aqua,color:'#f0c246',icon:'🐠'},
+    {p:siloso,color:'#f0c246',icon:'🏖️'},
+    {p:east,color:'#c084fc',icon:'🚲',label:'东海岸'},
+    {p:cB,color:'#c084fc',icon:'🏖️'}
+  ],
+  day1: [
+    {p:airport,color:'#ff6b4a',icon:'1',note:'16:40 落地'},
+    {p:jewel,color:'#ff6b4a',icon:'2',note:'17:30 星耀樟宜'},
+    {p:cV,color:'#ff6b4a',icon:'3',note:'19:00 晚餐'},
+    {p:hotel,color:'#ff6b4a',icon:'4',note:'20:00 入住'},
+    {p:east,color:'#ff6b4a',icon:'5',note:'20:30 散步'}
+  ],
+  day2: [
+    {p:hotel,color:'#2dd4a8',icon:'🏨',note:'08:30 出发'},
+    {p:gbtb,color:'#2dd4a8',icon:'1',label:'滨海湾花园',note:'09:15 云雾林→花穹 · 17:30 超级树→灯光秀'},
+    {p:lps,color:'#2dd4a8',icon:'2',label:'老巴刹',note:'12:00 午餐 · 20:15 沙爹街'},
+    {p:mer,color:'#2dd4a8',icon:'3',label:'鱼尾狮',note:'13:30 鱼尾狮公园'},
+    {p:mbs,color:'#2dd4a8',icon:'4',label:'金沙',note:'14:15 金沙购物城 · 21:15 水幕秀'}
+  ],
+  day3: [
+    {p:hotel,color:'#f0c246',icon:'🏨',note:'08:30 出发'},
+    {p:uss,color:'#f0c246',icon:'1',note:'09:30 环球影城'},
+    {p:aqua,color:'#f0c246',icon:'2',note:'13:15 海洋馆'},
+    {p:siloso,color:'#f0c246',icon:'3',note:'15:30 海滩'},
+    {p:tanjong,color:'#f0c246',icon:'4',note:'17:15 日落'},
+    {p:vivo,color:'#f0c246',icon:'5',note:'18:30 晚餐'}
+  ],
+  day4: [
+    {p:hotel,color:'#c084fc',icon:'🏨',note:'08:30 退房'},
+    {p:east,color:'#c084fc',icon:'1',note:'09:15 骑行'},
+    {p:cV,color:'#c084fc',icon:'2',note:'10:45 早午餐'},
+    {p:cB,color:'#c084fc',icon:'3',note:'12:00 看飞机'},
+    {p:jewel,color:'#c084fc',icon:'4',note:'13:40 星耀'},
+    {p:airport,color:'#c084fc',icon:'5',note:'15:30 check-in'}
+  ]
+};
+
+var dayLines = {
+  day1: [airport,jewel,cV,hotel,east],
+  day2: [hotel,gbtb,lps,mer,mbs],
+  day3: [uss,aqua,siloso,tanjong,vivo],
+  day4: [hotel,east,cV,cB,hotel,jewel,airport]
+};
+
+// ===== MAP INIT =====
+map = new maplibregl.Map({
+  container: 'map-fullscreen',
+  style: STYLE,
+  center: [103.87, 1.31],
+  zoom: 11,
+  pitch: 30,
+  attributionControl: false
+});
+map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-left');
+
+var currentMarkers = [];
+var currentLines = [];
+
+function clearMapLayers() {
+  currentMarkers.forEach(function(m) { m.remove(); });
+  currentMarkers = [];
+  currentLines.forEach(function(id) {
+    if (map.getLayer(id)) map.removeLayer(id);
+    if (map.getSource(id)) map.removeSource(id);
+  });
+  currentLines = [];
+}
+
+function makeMarkerEl(color, icon) {
+  var el = document.createElement('div');
+  var size = 32;
+  // Outer: no transition/transform — MapLibre controls transform for positioning
+  el.style.cssText = 'width:'+size+'px;height:'+size+'px;cursor:pointer;';
+  // Inner: the visual circle, hover effect applied via CSS class
+  var inner = document.createElement('div');
+  inner.className = 'marker-dot';
+  inner.style.cssText = 'background:'+color+';color:'+(color==='#f0c246'||color==='#2dd4a8'?'#0c121c':'#fff')+
+    ';width:100%;height:100%;border-radius:50%;text-align:center;line-height:'+size+
+    'px;font-size:'+Math.round(size*0.45)+'px;font-weight:700;box-shadow:0 3px 12px rgba(0,0,0,0.4);border:2px solid rgba(255,255,255,0.9);font-family:var(--font-body);transition:box-shadow .2s,filter .2s;';
+  inner.textContent = icon;
+  el.appendChild(inner);
+  return el;
+}
+
+function showDayMarkers(day) {
+  var items = dayMarkers[day] || [];
+  items.forEach(function(item) {
+    var el = makeMarkerEl(item.color, item.icon);
+    var popup = new maplibregl.Popup({ offset: 18, closeButton: false })
+      .setHTML('<b>'+item.p.name+'</b>'+(item.note ? '<br><span style="font-size:0.85em;color:#888;">'+item.note+'</span>' : ''));
+    var m = new maplibregl.Marker({ element: el })
+      .setLngLat([item.p.lng, item.p.lat])
+      .setPopup(popup)
+      .addTo(map);
+    currentMarkers.push(m);
+    if (item.label) {
+      var lbl = document.createElement('div');
+      lbl.style.cssText = 'font-size:11px;color:'+item.color+';font-weight:600;white-space:nowrap;text-shadow:0 0 4px #000,0 0 4px #000,0 0 4px #000,0 0 4px #000;';
+      lbl.textContent = item.label;
+      var lm = new maplibregl.Marker({ element: lbl })
+        .setLngLat([item.p.lng, item.p.lat])
+        .setOffset([0, -26])
+        .addTo(map);
+      currentMarkers.push(lm);
+    }
+  });
+
+  // Route lines
+  var linePoints = dayLines[day];
+  if (linePoints && dayColors[day]) {
+    map.on('load', drawLine);
+    if (map.loaded()) drawLine();
+    function drawLine() {
+      var id = 'route-' + day + '-' + Date.now();
+      try {
+        map.addSource(id, {
+          type: 'geojson',
+          data: { type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates: linePoints.map(function(p){ return [p.lng,p.lat]; }) } }
+        });
+        map.addLayer({
+          id: id, type:'line', source: id,
+          layout: { 'line-join':'round', 'line-cap':'round' },
+          paint: { 'line-color': dayColors[day], 'line-width': 4, 'line-opacity': 0.4, 'line-dasharray': [2,2] }
+        });
+        currentLines.push(id);
+      } catch(e) {}
+    }
+  }
+}
+
+// ===== SWITCH DAY =====
+var _switchDayPending = null;
+
+function switchDay(day) {
+  // Cancel any pending marker add from a previous switch
+  if (_switchDayPending) { map.off('moveend', _switchDayPending); _switchDayPending = null; }
+
+  // Update pills
+  document.querySelectorAll('.day-pill').forEach(function(p) { p.classList.remove('active'); });
+  document.querySelector('.day-pill[data-day="'+day+'"]').classList.add('active');
+
+  // Update content panel sections
+  document.querySelectorAll('.panel-section').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('sec-' + day).classList.add('active');
+
+  // Clear markers IMMEDIATELY so they don't float during animation
+  clearMapLayers();
+
+  // Fly map
+  var view = dayViews[day];
+  map.flyTo({
+    center: [view.center[1], view.center[0]],
+    zoom: view.zoom,
+    pitch: view.pitch,
+    bearing: day === 'overview' ? 0 : (Math.random() * 20 - 10),
+    duration: 1500
+  });
+
+  // Add markers AFTER flyTo completes — no "drifting" effect
+  function onMoveEnd() {
+    _switchDayPending = null;
+    showDayMarkers(day);
+  }
+  _switchDayPending = onMoveEnd;
+  map.once('moveend', onMoveEnd);
+
+  // Scroll content panel to top
+  document.getElementById('contentPanel').scrollTop = 0;
+}
+
+// ===== FLY TO TARGET =====
+function flyToTarget(text) {
+  var keys = Object.keys(flyTargets);
+  for (var i = 0; i < keys.length; i++) {
+    if (text.indexOf(keys[i]) !== -1) {
+      var p = flyTargets[keys[i]];
+      map.flyTo({ center: [p.lng, p.lat], zoom: 15, pitch: 55, duration: 1200 });
+      return p.name;
+    }
+  }
+  return null;
+}
+
+// ===== INIT MARKERS =====
+map.on('load', function() { showDayMarkers('overview'); });
+
+// ===== TIMELINE CLICK BINDING =====
+function bindTimelineClicks() {
+  document.querySelectorAll('.timeline-item[data-fly-text]').forEach(function(item) {
+    item.addEventListener('click', function() {
+      var text = item.getAttribute('data-fly-text');
+      var name = flyToTarget(text);
+      if (name) showToast('📍 飞往 ' + name);
+    });
+  });
+}
+bindTimelineClicks();
+
+// ===== CHECKLIST =====
+document.addEventListener('click', function(e) {
+  var li = e.target.closest('.checklist li');
+  if (li) li.classList.toggle('checked');
+});
+
+// ===== TOAST =====
+var toastEl = document.getElementById('toast');
+function showToast(msg) {
+  toastEl.textContent = msg;
+  toastEl.classList.add('show');
+  clearTimeout(toastEl._t);
+  toastEl._t = setTimeout(function() { toastEl.classList.remove('show'); }, 2200);
+}
+
+// ===== MOBILE PANEL TOGGLE =====
+function togglePanel() {
+  var panel = document.getElementById('contentPanel');
+  panel.classList.toggle('hidden');
+  var btn = document.getElementById('panelToggle');
+  btn.textContent = panel.classList.contains('hidden') ? '📋' : '✕';
+}
+</script>
+</body>
+</html>
