@@ -1234,24 +1234,25 @@ var STYLE = 'https://tiles.openfreemap.org/styles/liberty';
 var map;
 
 // ===== LOCATION DATA =====
-var hotel   = {lat:1.3347,lng:103.9613,name:'Dorsett Changi City'};
-var airport = {lat:1.3644,lng:103.9915,name:'樟宜机场'};
-var jewel   = {lat:1.3631,lng:103.9881,name:'星耀樟宜 Jewel'};
-var east    = {lat:1.3077,lng:103.9315,name:'东海岸公园'};
-var cV      = {lat:1.3879,lng:103.9878,name:'樟宜村熟食中心'};
-var cB      = {lat:1.3907,lng:103.9846,name:'樟宜海滩'};
-var songFa  = {lat:1.3585,lng:103.9902,name:'松发肉骨茶'};
-var gbtb    = {lat:1.2816,lng:103.8636,name:'滨海湾花园'};
-var lps     = {lat:1.2797,lng:103.8466,name:'老巴刹'};
-var mer     = {lat:1.2868,lng:103.8545,name:'鱼尾狮公园'};
-var mbs     = {lat:1.2834,lng:103.8607,name:'金沙/MBS'};
-var uss     = {lat:1.2540,lng:103.8230,name:'环球影城'};
-var aqua    = {lat:1.2584,lng:103.8208,name:'S.E.A.海洋馆'};
-var siloso  = {lat:1.2512,lng:103.8160,name:'西乐索海滩'};
-var tanjong = {lat:1.2446,lng:103.8252,name:'Tanjong Beach Club'};
-var vivo    = {lat:1.2644,lng:103.8222,name:'怡丰城'};
-var tianTian= {lat:1.2783,lng:103.8451,name:'天天海南鸡饭'};
-var cableCar= {lat:1.2544,lng:103.8175,name:'花柏山缆车'};
+// gmap: Google Maps search-friendly English name
+var hotel   = {lat:1.3347,lng:103.9613,name:'Dorsett Changi City',gmap:'Dorsett Changi City Singapore'};
+var airport = {lat:1.3644,lng:103.9915,name:'樟宜机场',gmap:'Changi Airport Singapore'};
+var jewel   = {lat:1.3631,lng:103.9881,name:'星耀樟宜 Jewel',gmap:'Jewel Changi Airport'};
+var east    = {lat:1.3077,lng:103.9315,name:'东海岸公园',gmap:'East Coast Park Singapore'};
+var cV      = {lat:1.3879,lng:103.9878,name:'樟宜村熟食中心',gmap:'Changi Village Food Centre Singapore'};
+var cB      = {lat:1.3907,lng:103.9846,name:'樟宜海滩',gmap:'Changi Beach Park Singapore'};
+var songFa  = {lat:1.3585,lng:103.9902,name:'松发肉骨茶',gmap:'Song Fa Bak Kut The Changi Airport'};
+var gbtb    = {lat:1.2816,lng:103.8636,name:'滨海湾花园',gmap:'Gardens by the Bay Singapore'};
+var lps     = {lat:1.2797,lng:103.8466,name:'老巴刹',gmap:'Lau Pa Sat Singapore'};
+var mer     = {lat:1.2868,lng:103.8545,name:'鱼尾狮公园',gmap:'Merlion Park Singapore'};
+var mbs     = {lat:1.2834,lng:103.8607,name:'金沙/MBS',gmap:'Marina Bay Sands Singapore'};
+var uss     = {lat:1.2540,lng:103.8230,name:'环球影城',gmap:'Universal Studios Singapore'};
+var aqua    = {lat:1.2584,lng:103.8208,name:'S.E.A.海洋馆',gmap:'S.E.A. Aquarium Singapore'};
+var siloso  = {lat:1.2512,lng:103.8160,name:'西乐索海滩',gmap:'Siloso Beach Sentosa Singapore'};
+var tanjong = {lat:1.2446,lng:103.8252,name:'Tanjong Beach Club',gmap:'Tanjong Beach Club Singapore'};
+var vivo    = {lat:1.2644,lng:103.8222,name:'怡丰城',gmap:'VivoCity Singapore'};
+var tianTian= {lat:1.2783,lng:103.8451,name:'天天海南鸡饭',gmap:'Tian Tian Hainanese Chicken Rice Maxwell'};
+var cableCar= {lat:1.2544,lng:103.8175,name:'花柏山缆车',gmap:'Mount Faber Cable Car Singapore'};
 
 var allPOIs = [hotel,airport,jewel,east,cV,cB,songFa,gbtb,lps,mer,mbs,uss,aqua,siloso,tanjong,vivo,tianTian,cableCar];
 
@@ -1528,7 +1529,7 @@ function resolveTarget(text) {
   return null;
 }
 
-// Per-location nav buttons (🧭) on timeline items
+// Per-location nav buttons (🧭) on timeline items — search by name
 function addNavLinks() {
   document.querySelectorAll('.timeline-item[data-fly-text]').forEach(function(item) {
     if (item.querySelector('.nav-link')) return;
@@ -1536,17 +1537,16 @@ function addNavLinks() {
     var target = resolveTarget(text);
     if (!target) return;
 
+    var q = encodeURIComponent(target.gmap || target.name);
     var link = document.createElement('a');
     link.className = 'nav-link';
-    link.href = 'https://www.google.com/maps/search/?api=1&query=' +
-      target.lat + ',' + target.lng + '&query_place_name=' +
-      encodeURIComponent(target.name);
+    link.href = 'https://www.google.com/maps/search/' + q;
     link.target = '_blank';
     link.rel = 'noopener';
-    link.title = '导航到 ' + target.name;
+    link.title = '在 Google Maps 中打开 ' + (target.gmap || target.name);
     link.textContent = '🧭';
     link.addEventListener('click', function(e) {
-      e.stopPropagation(); // don't trigger flyTo
+      e.stopPropagation();
     });
 
     var col = item.querySelector('.content-col');
@@ -1554,7 +1554,7 @@ function addNavLinks() {
   });
 }
 
-// Full-day route buttons
+// Full-day route buttons — directions by place name
 var dayRoutes = {
   day1: {pts:[airport,jewel,cV,hotel,east], desc:'机场 → 星耀樟宜 → 樟宜村晚餐 → 酒店 → 东海岸散步'},
   day2: {pts:[hotel,gbtb,lps,mer,mbs], desc:'酒店 → 滨海湾花园 → 老巴刹 → 鱼尾狮 → 金沙（灯光秀）'},
@@ -1563,17 +1563,9 @@ var dayRoutes = {
 };
 
 function gmapRouteUrl(pts) {
-  var o = pts[0].lat + ',' + pts[0].lng;
-  var d = pts[pts.length - 1].lat + ',' + pts[pts.length - 1].lng;
-  var w = '';
-  if (pts.length > 2) {
-    for (var i = 1; i < pts.length - 1; i++) {
-      if (i > 1) w += '%7C';
-      w += pts[i].lat + ',' + pts[i].lng;
-    }
-    w = '&waypoints=' + w;
-  }
-  return 'https://www.google.com/maps/dir/?api=1&origin=' + o + '&destination=' + d + w + '&travelmode=transit';
+  var names = pts.map(function(p) { return encodeURIComponent(p.gmap || p.name); });
+  var url = 'https://www.google.com/maps/dir/' + names.join('/');
+  return url;
 }
 
 function addRouteButtons() {
