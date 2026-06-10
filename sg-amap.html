@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>新加坡 4天3晚 · 高德行程地图</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; overflow: hidden; height: 100vh; }
+
+#mapContainer { position: absolute; inset: 0; }
+
+/* ---- Top bar ---- */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+  background: rgba(255,255,255,.88); backdrop-filter: saturate(180%) blur(20px);
+  border-bottom: .5px solid rgba(0,0,0,.08);
+  display: flex; align-items: center; padding: 8px 16px; gap: 8px;
+}
+.topbar h1 { font-size: 17px; font-weight: 700; white-space: nowrap; margin-right: auto; }
+.topbar h1 span { font-size: 13px; font-weight: 400; color: #86868b; margin-left: 6px; }
+
+.style-btn {
+  padding: 5px 12px; border-radius: 18px; border: 1px solid rgba(0,0,0,.1);
+  background: #fff; font-size: 12px; font-weight: 500; cursor: pointer;
+  transition: all .2s; white-space: nowrap;
+}
+.style-btn:hover { background: #f0f0f0; }
+.style-btn.active { background: #1d1d1f; color: #fff; border-color: #1d1d1f; }
+
+/* ---- Day tabs ---- */
+.day-tabs {
+  position: fixed; left: 16px; top: 64px; z-index: 10;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.day-tab {
+  width: 52px; height: 52px; border-radius: 14px; border: none;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; cursor: pointer; transition: all .25s;
+  box-shadow: 0 2px 10px rgba(0,0,0,.12); background: rgba(255,255,255,.92);
+  backdrop-filter: blur(12px); color: #1d1d1f;
+}
+.day-tab .emoji { font-size: 18px; line-height: 1; margin-bottom: 2px; }
+.day-tab:active { transform: scale(.92); }
+.day-tab.active { color: #fff; }
+.day-tab[data-day="0"].active { background: #0071e3; }
+.day-tab[data-day="1"].active { background: #ff9500; }
+.day-tab[data-day="2"].active { background: #007aff; }
+.day-tab[data-day="3"].active { background: #34c759; }
+.day-tab[data-day="4"].active { background: #af52de; }
+
+/* ---- Bottom sheet ---- */
+.sheet {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+  background: rgba(255,255,255,.9); backdrop-filter: saturate(180%) blur(20px);
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -4px 30px rgba(0,0,0,.1);
+  transition: transform .35s cubic-bezier(.22,1,.36,1);
+  max-height: 55vh; overflow: hidden;
+}
+.sheet.collapsed { transform: translateY(calc(100% - 56px)); }
+.sheet-handle { width: 36px; height: 4px; border-radius: 2px; background: #c7c7cc; margin: 8px auto 4px; }
+.sheet-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 20px 10px; cursor: pointer;
+}
+.sheet-header h2 { font-size: 17px; font-weight: 700; }
+.sheet-header .toggle { font-size: 12px; color: #86868b; }
+.sheet-body { overflow-y: auto; max-height: calc(55vh - 56px); padding: 0 16px 24px; }
+
+.loc-card {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px; border-radius: 12px; cursor: pointer; transition: background .15s;
+}
+.loc-card:hover { background: rgba(0,0,0,.04); }
+.loc-card:active { background: rgba(0,0,0,.08); }
+.loc-dot {
+  flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; color: #fff; font-weight: 700;
+  box-shadow: 0 2px 6px rgba(0,0,0,.15);
+}
+.loc-info { flex: 1; min-width: 0; }
+.loc-name { font-size: 15px; font-weight: 600; line-height: 1.3; }
+.loc-time { font-size: 12px; color: #86868b; margin-top: 1px; }
+.loc-desc { font-size: 13px; color: #86868b; margin-top: 3px; line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.loc-budget { display: inline-block; margin-top: 4px; padding: 2px 8px;
+  background: #f2f2f7; border-radius: 6px; font-size: 11px; color: #86868b; font-weight: 500; }
+
+/* ---- Amap info window override ---- */
+.amap-info-content { padding: 12px 14px !important; font-family: inherit !important; border-radius: 14px !important; }
+.amap-info-content h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+.amap-info-content p { font-size: 13px; color: #86868b; line-height: 1.4; margin: 0; }
+.amap-info-content .popup-time { font-size: 12px; color: #ff9500; font-weight: 600; margin-bottom: 4px; }
+.amap-info-content .popup-budget { margin-top: 6px; font-size: 12px; color: #86868b; }
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .day-tabs { left: 8px; top: 58px; }
+  .day-tab { width: 44px; height: 44px; border-radius: 12px; font-size: 10px; }
+  .day-tab .emoji { font-size: 16px; }
+  .topbar h1 span { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div id="mapContainer"></div>
+
+<div class="topbar">
+  <h1>🇸🇬 新加坡 4天3晚<span>6.12 – 6.15</span></h1>
+  <button class="style-btn active" data-style="normal">🗺️ 标准</button>
+  <button class="style-btn" data-style="satellite">🛰️ 卫星</button>
+  <button class="style-btn" data-style="dark">🌙 暗色</button>
+</div>
+
+<div class="day-tabs" id="dayTabs"></div>
+
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header" id="sheetToggle">
+    <h2 id="sheetTitle">全景总览</h2>
+    <span class="toggle">▼ 展开</span>
+  </div>
+  <div class="sheet-body" id="sheetBody"></div>
+</div>
+
+<!-- ╔══════════════════════════════════════════════╗
+     ║  ⚠️ 把下方的 YOUR_AMAP_KEY 替换为你的高德 Key  ║
+     ║  免费申请: https://console.amap.com/dev/key/app ║
+     ╚══════════════════════════════════════════════╝ -->
+<script src="https://webapi.amap.com/maps?v=2.0&key=f0895dba7edfeeb8f8ba3fc24b021a72"></script>
+
+<script>
+// ===== TRIP DATA =====
+var HOTEL = { name: 'Dorsett 樟宜帝盛酒店', lat: 1.3354, lng: 103.9618, color: '#ff9500' };
+
+var DAYS = [
+  { id: 0, label: '总览', emoji: '🗺️', title: '全景总览', color: '#0071e3', locations: [] },
+  { id: 1, label: 'D1', emoji: '🛬', title: 'Day 1 · 抵达之夜', date: '6.12 周五', color: '#ff9500', locations: [
+    { name: '樟宜机场 Changi Airport', lat: 1.3644, lng: 103.9915, time: '16:40', desc: '到达，入关取行李', budget: '' },
+    { name: 'Jewel 星耀樟宜', lat: 1.3631, lng: 103.9881, time: '17:30', desc: '雨漩涡瀑布 Rain Vortex，室内森林景观', budget: '免费' },
+    { name: '松发肉骨茶', lat: 1.3585, lng: 103.9902, time: '19:00', desc: '胡椒肉骨汤配饭，樟宜 T3 分店', budget: 'SGD 12-18/人' },
+    { name: 'Dorsett 樟宜帝盛酒店', lat: 1.3354, lng: 103.9618, time: '20:00', desc: 'Check-in 入住', budget: '' }
+  ]},
+  { id: 2, label: 'D2', emoji: '🏙️', title: 'Day 2 · 滨海湾', date: '6.13 周六', color: '#007aff', locations: [
+    { name: '鱼尾狮公园 Merlion Park', lat: 1.2868, lng: 103.8545, time: '10:00', desc: '新加坡地标，拍照打卡', budget: '免费' },
+    { name: 'Satay by the Bay 沙爹湾', lat: 1.2785, lng: 103.8590, time: '12:00', desc: '滨海湾花园内露天美食街', budget: 'SGD 10-15/人' },
+    { name: '滨海湾花园', lat: 1.2816, lng: 103.8636, time: '14:00', desc: '超级树 + 云雾林 + 花穹', budget: '双冷室 SGD 40' },
+    { name: '超级树灯光秀', lat: 1.2822, lng: 103.8630, time: '19:45', desc: '免费灯光秀，约15分钟', budget: '免费' },
+    { name: '老巴刹 Lau Pa Sat', lat: 1.2797, lng: 103.8466, time: '20:30', desc: '百年维多利亚式美食中心，沙爹街', budget: 'SGD 15-25/人' }
+  ]},
+  { id: 3, label: 'D3', emoji: '🎢', title: 'Day 3 · 圣淘沙', date: '6.14 周日', color: '#34c759', locations: [
+    { name: '环球影城 USS', lat: 1.2540, lng: 103.8230, time: '10:00', desc: '变形金刚、木乃伊复仇记', budget: '门票 SGD 81' },
+    { name: 'USS 园内午餐', lat: 1.2545, lng: 103.8225, time: '12:30', desc: '园内快速餐厅', budget: 'SGD 10-15/人' },
+    { name: 'S.E.A. 海洋馆', lat: 1.2584, lng: 103.8208, time: '14:00', desc: '世界最大海洋馆之一', budget: '门票 SGD 46' },
+    { name: '巴拉湾海滩', lat: 1.2512, lng: 103.8160, time: '15:30', desc: '亚洲大陆最南点，吊桥拍照', budget: '免费' },
+    { name: '花柏山缆车', lat: 1.2544, lng: 103.8175, time: '17:30', desc: '圣淘沙→花柏山，日落景色', budget: 'SGD 35/人' },
+    { name: '天天海南鸡饭', lat: 1.2783, lng: 103.8451, time: '19:30', desc: 'Maxwell 米其林推荐鸡饭', budget: 'SGD 6-10/人' }
+  ]},
+  { id: 4, label: 'D4', emoji: '🚲', title: 'Day 4 · 甘榜格南→机场', date: '6.15 周一', color: '#af52de', locations: [
+    { name: '苏丹回教堂', lat: 1.3006, lng: 103.8602, time: '09:30', desc: '金色穹顶，甘榜格南地标', budget: '免费' },
+    { name: '哈芝巷 Haji Lane', lat: 1.3020, lng: 103.8610, time: '10:30', desc: '涂鸦窄巷 + 独立小店', budget: '免费' },
+    { name: '% Arabica 咖啡', lat: 1.3015, lng: 103.8608, time: '11:00', desc: '网红咖啡，拿铁招牌', budget: 'SGD 7-10/杯' },
+    { name: '小印度 Little India', lat: 1.3066, lng: 103.8519, time: '12:00', desc: '彩色建筑 + 本地市集', budget: '免费' },
+    { name: 'Dorsett 取行李退房', lat: 1.3354, lng: 103.9618, time: '14:00', desc: '回酒店收拾行李', budget: '' },
+    { name: '樟宜机场 ✈️', lat: 1.3644, lng: 103.9915, time: '16:00', desc: '免税店 + Jewel B2', budget: '' }
+  ]}
+];
+
+// ===== MAP INIT =====
+var map = new AMap.Map('mapContainer', {
+  center: [103.87, 1.30],
+  zoom: 11,
+  pitch: 35,
+  rotation: -10,
+  viewMode: '3D',
+  showLabel: true,
+  showBuildings: true
+});
+
+// ===== STATE =====
+var currentDay = 0;
+var mapMarkers = [];
+var routeLine = null;
+
+// ===== BUILD DAY TABS =====
+var tabsEl = document.getElementById('dayTabs');
+DAYS.forEach(function(d) {
+  var btn = document.createElement('button');
+  btn.className = 'day-tab' + (d.id === 0 ? ' active' : '');
+  btn.dataset.day = d.id;
+  btn.innerHTML = '<span class="emoji">' + d.emoji + '</span>' + d.label;
+  btn.onclick = function() { go(d.id); };
+  tabsEl.appendChild(btn);
+});
+
+// ===== STYLE SWITCHER =====
+document.querySelectorAll('.style-btn').forEach(function(btn) {
+  btn.onclick = function() {
+    document.querySelectorAll('.style-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    var s = btn.dataset.style;
+    if (s === 'satellite') {
+      map.setLayers([new AMap.TileLayer.Satellite()]);
+    } else if (s === 'dark') {
+      map.setMapStyle('amap://styles/dark');
+    } else {
+      map.setMapStyle('amap://styles/normal');
+      map.setLayers([new AMap.TileLayer()]);
+    }
+  };
+});
+
+// ===== SHEET TOGGLE =====
+var sheet = document.getElementById('sheet');
+document.getElementById('sheetToggle').onclick = function() {
+  sheet.classList.toggle('collapsed');
+  var toggle = sheet.querySelector('.toggle');
+  toggle.textContent = sheet.classList.contains('collapsed') ? '▼ 展开' : '▲ 收起';
+};
+
+// ===== CORE: GO TO DAY =====
+function go(dayId) {
+  currentDay = dayId;
+
+  // Update tabs
+  document.querySelectorAll('.day-tab').forEach(function(t) {
+    t.classList.toggle('active', +t.dataset.day === dayId);
+  });
+
+  // Clear markers
+  map.remove(mapMarkers);
+  mapMarkers = [];
+  if (routeLine) { map.remove(routeLine); routeLine = null; }
+
+  var day = DAYS.find(function(d) { return d.id === dayId; });
+
+  if (dayId === 0) {
+    showOverview();
+    document.getElementById('sheetTitle').textContent = '全景总览';
+    return;
+  }
+
+  document.getElementById('sheetTitle').textContent = day.title + ' · ' + day.date;
+
+  // Add numbered markers
+  day.locations.forEach(function(loc, i) {
+    var markerContent = document.createElement('div');
+    markerContent.style.cssText = 'width:34px;height:34px;border-radius:50%;background:' + day.color +
+      ';color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;' +
+      'box-shadow:0 3px 10px ' + day.color + '66;border:2.5px solid #fff;cursor:pointer;';
+    markerContent.textContent = i + 1;
+
+    var infoBody = '<h3>' + loc.name + '</h3>' +
+      (loc.time ? '<p class="popup-time">' + loc.time + '</p>' : '') +
+      '<p>' + loc.desc + '</p>' +
+      (loc.budget ? '<p class="popup-budget">💰 ' + loc.budget + '</p>' : '');
+
+    var marker = new AMap.Marker({
+      position: [loc.lng, loc.lat],
+      content: markerContent,
+      offset: new AMap.Pixel(-17, -17),
+      zIndex: 100 + i
+    });
+    marker.infoWindow = new AMap.InfoWindow({
+      content: infoBody, offset: new AMap.Pixel(0, -20), closeWhenClickMap: true
+    });
+    marker.on('click', function() {
+      marker.infoWindow.open(map, marker.getPosition());
+    });
+    marker.addTo(map);
+    mapMarkers.push(marker);
+  });
+
+  // Hotel marker
+  var hotelContent = document.createElement('div');
+  hotelContent.style.cssText = 'width:34px;height:34px;border-radius:50%;background:#ff9500;' +
+    'color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;' +
+    'box-shadow:0 3px 10px rgba(255,149,0,.4);border:2.5px solid #fff;cursor:pointer;';
+  hotelContent.textContent = '🏨';
+  var hotelM = new AMap.Marker({
+    position: [HOTEL.lng, HOTEL.lat],
+    content: hotelContent,
+    offset: new AMap.Pixel(-17, -17),
+    zIndex: 200
+  });
+  hotelM.addTo(map);
+  mapMarkers.push(hotelM);
+
+  // Route polyline
+  var path = day.locations.map(function(l) { return [l.lng, l.lat]; });
+  if (path.length > 1) {
+    routeLine = new AMap.Polyline({
+      path: path,
+      strokeColor: day.color,
+      strokeWeight: 4,
+      strokeOpacity: 0.6,
+      strokeStyle: 'dashed',
+      strokeDasharray: [10, 6],
+      lineJoin: 'round',
+      lineCap: 'round'
+    });
+    routeLine.addTo(map);
+  }
+
+  // Fit view
+  map.setFitView(mapMarkers, false, [80, 300, 80, 40], 14);
+
+  // Build sheet
+  buildSheetList(day);
+  sheet.classList.remove('collapsed');
+  sheet.querySelector('.toggle').textContent = '▲ 收起';
+}
+
+// ===== OVERVIEW =====
+function showOverview() {
+  DAYS.slice(1).forEach(function(day) {
+    day.locations.forEach(function(loc) {
+      var el = document.createElement('div');
+      el.style.cssText = 'width:12px;height:12px;border-radius:50%;background:' + day.color +
+        ';box-shadow:0 0 6px ' + day.color + '88;border:1.5px solid #fff;cursor:pointer;';
+      var marker = new AMap.Marker({
+        position: [loc.lng, loc.lat],
+        content: el,
+        offset: new AMap.Pixel(-6, -6),
+        zIndex: 50
+      });
+      var iw = new AMap.InfoWindow({
+        content: '<h3>' + loc.name + '</h3><p>' + day.label + ' · ' + loc.time + '</p>',
+        offset: new AMap.Pixel(0, -10), closeWhenClickMap: true
+      });
+      marker.on('click', function() { iw.open(map, marker.getPosition()); });
+      marker.addTo(map);
+      mapMarkers.push(marker);
+    });
+  });
+
+  // Hotel
+  var hEl = document.createElement('div');
+  hEl.style.cssText = 'width:16px;height:16px;border-radius:50%;background:#ff9500;' +
+    'box-shadow:0 0 8px rgba(255,149,0,.5);border:2px solid #fff;cursor:pointer;';
+  var hM = new AMap.Marker({
+    position: [HOTEL.lng, HOTEL.lat],
+    content: hEl,
+    offset: new AMap.Pixel(-8, -8),
+    zIndex: 200
+  });
+  hM.addTo(map);
+  mapMarkers.push(hM);
+
+  map.setFitView(mapMarkers, false, [80, 120, 90, 40]);
+
+  // Build overview sheet
+  var html = '';
+  DAYS.slice(1).forEach(function(d) {
+    html += '<div class="loc-card" onclick="go(' + d.id + ')" style="margin-bottom:4px;">' +
+      '<div class="loc-dot" style="background:' + d.color + '">' + d.emoji + '</div>' +
+      '<div class="loc-info">' +
+      '<div class="loc-name">' + d.title + '</div>' +
+      '<div class="loc-time">' + d.date + ' · ' + d.locations.length + ' 个地点</div>' +
+      '</div></div>';
+  });
+  document.getElementById('sheetBody').innerHTML = html;
+  sheet.classList.add('collapsed');
+}
+
+// ===== SHEET LIST =====
+function buildSheetList(day) {
+  var html = '';
+  day.locations.forEach(function(loc, i) {
+    html += '<div class="loc-card" onclick="flyTo(' + loc.lat + ',' + loc.lng + ')">' +
+      '<div class="loc-dot" style="background:' + day.color + '">' + (i + 1) + '</div>' +
+      '<div class="loc-info">' +
+      '<div class="loc-name">' + loc.name + '</div>' +
+      '<div class="loc-time">' + loc.time + '</div>' +
+      '<div class="loc-desc">' + loc.desc + '</div>' +
+      (loc.budget ? '<div class="loc-budget">💰 ' + loc.budget + '</div>' : '') +
+      '</div></div>';
+  });
+  document.getElementById('sheetBody').innerHTML = html;
+}
+
+// ===== FLY TO =====
+function flyTo(lat, lng) {
+  map.setZoomAndCenter(15, [lng, lat], false, 800);
+}
+
+// ===== INIT =====
+go(0);
+</script>
+</body>
+</html>
