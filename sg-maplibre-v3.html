@@ -563,6 +563,55 @@ body {
   filter: brightness(1.15);
 }
 
+/* ===== NAV LINK on timeline items ===== */
+.timeline-item .content-col {
+  position: relative;
+  padding-right: 38px;
+}
+.nav-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: background 0.2s, border-color 0.2s;
+  z-index: 2;
+}
+.nav-link:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-border-hover);
+  box-shadow: 0 0 12px rgba(45,212,168,0.3);
+}
+
+/* ===== ROUTE LINK CARD ===== */
+.route-link-card {
+  display: block;
+  text-decoration: none;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, rgba(45,212,168,0.12), rgba(45,212,168,0.04));
+  border-color: rgba(45,212,168,0.15) !important;
+  cursor: pointer;
+}
+.route-link-card:hover {
+  background: linear-gradient(135deg, rgba(45,212,168,0.22), rgba(45,212,168,0.08)) !important;
+  border-color: rgba(45,212,168,0.3) !important;
+}
+.route-link-card h3 { margin-bottom: 4px; }
+.route-desc {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 300;
+  line-height: 1.5;
+}
+
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
   .content-panel {
@@ -1466,6 +1515,91 @@ function togglePanel() {
   var btn = document.getElementById('panelToggle');
   btn.textContent = panel.classList.contains('hidden') ? '📋' : '✕';
 }
+
+// ============================================================
+// GOOGLE MAPS INTEGRATION
+// ============================================================
+
+function resolveTarget(text) {
+  var keys = Object.keys(flyTargets);
+  for (var i = 0; i < keys.length; i++) {
+    if (text.indexOf(keys[i]) !== -1) return flyTargets[keys[i]];
+  }
+  return null;
+}
+
+// Per-location nav buttons (🧭) on timeline items
+function addNavLinks() {
+  document.querySelectorAll('.timeline-item[data-fly-text]').forEach(function(item) {
+    if (item.querySelector('.nav-link')) return;
+    var text = item.getAttribute('data-fly-text');
+    var target = resolveTarget(text);
+    if (!target) return;
+
+    var link = document.createElement('a');
+    link.className = 'nav-link';
+    link.href = 'https://www.google.com/maps/search/?api=1&query=' +
+      target.lat + ',' + target.lng + '&query_place_name=' +
+      encodeURIComponent(target.name);
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.title = '导航到 ' + target.name;
+    link.textContent = '🧭';
+    link.addEventListener('click', function(e) {
+      e.stopPropagation(); // don't trigger flyTo
+    });
+
+    var col = item.querySelector('.content-col');
+    if (col) col.appendChild(link);
+  });
+}
+
+// Full-day route buttons
+var dayRoutes = {
+  day1: {pts:[airport,jewel,cV,hotel,east], desc:'机场 → 星耀樟宜 → 樟宜村晚餐 → 酒店 → 东海岸散步'},
+  day2: {pts:[hotel,gbtb,lps,mer,mbs], desc:'酒店 → 滨海湾花园 → 老巴刹 → 鱼尾狮 → 金沙（灯光秀）'},
+  day3: {pts:[hotel,uss,aqua,siloso,tanjong,vivo], desc:'酒店 → 环球影城 → 海洋馆 → 海滩 → 怡丰城'},
+  day4: {pts:[hotel,east,cV,cB,hotel,jewel,airport], desc:'酒店 → 东海岸骑行 → 樟宜村 → 樟宜海滩 → 取行李 → 星耀樟宜 → 机场'}
+};
+
+function gmapRouteUrl(pts) {
+  var o = pts[0].lat + ',' + pts[0].lng;
+  var d = pts[pts.length - 1].lat + ',' + pts[pts.length - 1].lng;
+  var w = '';
+  if (pts.length > 2) {
+    for (var i = 1; i < pts.length - 1; i++) {
+      if (i > 1) w += '%7C';
+      w += pts[i].lat + ',' + pts[i].lng;
+    }
+    w = '&waypoints=' + w;
+  }
+  return 'https://www.google.com/maps/dir/?api=1&origin=' + o + '&destination=' + d + w + '&travelmode=transit';
+}
+
+function addRouteButtons() {
+  ['day1','day2','day3','day4'].forEach(function(day) {
+    var section = document.getElementById('sec-' + day);
+    if (!section || section.querySelector('.route-link-card')) return;
+    var route = dayRoutes[day];
+    if (!route) return;
+
+    var a = document.createElement('a');
+    a.className = 'glass-card route-link-card';
+    a.href = gmapRouteUrl(route.pts);
+    a.target = '_blank';
+    a.rel = 'noopener';
+    a.innerHTML = '<h3>🧭 在 Google Maps 打开全天路线</h3><div class="route-desc">' + route.desc + '</div>';
+
+    // Insert before the first glass-card (timeline)
+    var firstCard = section.querySelector('.glass-card');
+    if (firstCard) section.insertBefore(a, firstCard);
+    else section.appendChild(a);
+  });
+}
+
+// Init nav integration
+addNavLinks();
+addRouteButtons();
 </script>
 </body>
 </html>
